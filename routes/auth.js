@@ -25,9 +25,8 @@ const generateToken = (user) => {
 
 // Rota para registro de usuário
 router.post('/register', async (req, res) => {
-    const { nome, peso, dataNasc, email, senha, idTipoDeUsuario } = req.body;
+    const { nome, peso, dataNasc, email, idTipoDeUsuario, senha } = req.body;
 
-    // Log para depuração
     console.log('Corpo da requisição:', req.body);
 
     if (!nome || !peso || !dataNasc || !email || !senha || !idTipoDeUsuario) {
@@ -50,23 +49,15 @@ router.post('/register', async (req, res) => {
                 // Hash da senha com 10 rounds de salt
                 const hashedPassword = await bcrypt.hash(senha, 10);
 
-                // Inserir novo usuário usando a PROCEDURES armazenado
-                connection.query('CALL AddUser(?, ?, ?, ?)', [nome, peso, dataNasc, idTipoDeUsuario], (error) => {
+                // Inserir novo usuário usando a PROCEDURE armazenada
+                connection.query('CALL AddUser(?, ?, ?, ?, ?, ?)', [nome, email, peso, dataNasc, idTipoDeUsuario, hashedPassword], (error) => {
                     if (error) {
                         console.error('Erro ao registrar usuário:', error);
                         return res.status(500).json({ error: 'Erro ao registrar usuário' });
                     }
 
-                    // Atualizar a tabela Usuario com o email e senha
-                    connection.query('UPDATE Usuario SET email = ?, senha = ? WHERE nome = ? AND peso = ? AND dataNasc = ? AND idTipoDeUsuario = ?', [email, hashedPassword, nome, peso, dataNasc, idTipoDeUsuario], (error) => {
-                        if (error) {
-                            console.error('Erro ao atualizar dados do usuário:', error);
-                            return res.status(500).json({ error: 'Erro ao atualizar dados do usuário' });
-                        }
-                        res.status(201).json({ message: 'Usuário registrado com sucesso!' });
-                    });
+                    res.status(201).json({ message: 'Usuário registrado com sucesso!' });
                 });
-
             } catch (err) {
                 console.error('Erro ao processar a senha:', err);
                 res.status(500).json({ error: 'Erro ao processar a senha' });
@@ -77,6 +68,7 @@ router.post('/register', async (req, res) => {
         res.status(500).json({ error: 'Erro inesperado' });
     }
 });
+
 
 // Rota para login de usuário
 router.post('/login', (req, res) => {
