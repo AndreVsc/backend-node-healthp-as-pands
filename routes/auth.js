@@ -12,6 +12,7 @@ const connection = mysql.createConnection({
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
+    port: process.env.DB_PORT,
 });
 
 // Função para gerar um token JWT
@@ -72,19 +73,18 @@ router.post('/register', async (req, res) => {
 
 // Rota para login de usuário
 router.post('/login', (req, res) => {
-    const { email, nome, password } = req.body; // Altere 'senha' para 'password'
+    const { email , password } = req.body; // Altere 'senha' para 'password'
 
     console.log('Login request body:', req.body); // Log para depuração
 
-    if ((!email && !nome) || !password) {
+    if ((!email) || !password) {
         return res.status(400).json({ error: 'Nome ou e-mail, e senha são obrigatórios' });
     }
 
     // Verificar credenciais
-    const query = email ? 'SELECT * FROM Usuario WHERE email = ?' : 'SELECT * FROM Usuario WHERE nome = ?';
-    const identifier = email || nome;
+    const query = 'SELECT * FROM Usuario WHERE email = ?';
 
-    connection.query(query, [identifier], async (error, results) => {
+    connection.query(query, [email], async (error, results) => {
         if (error) {
             console.error('Erro no servidor:', error);
             return res.status(500).json({ error: 'Erro no servidor' });

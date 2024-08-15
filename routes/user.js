@@ -12,13 +12,23 @@ const connection = mysql.createConnection({
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
+    port: process.env.DB_PORT,
 });
 
 // Rota para obter dados do usuário logado
 router.get('/profile', authenticateJWT, (req, res) => {
     const userId = req.user.id;
 
-    connection.query('SELECT nome, peso, dataNasc, email FROM Usuario WHERE idUsuario = ?', [userId], (error, results) => {
+    connection.query(`
+        SELECT 
+            nome, 
+            peso, 
+            dataNasc, 
+            idTipoDeUsuario,
+            CalculateAge(dataNasc) AS idade,
+            GetUserType(idTipoDeUsuario) AS tipo
+        FROM Usuario
+        WHERE idUsuario = ?`, [userId], (error, results) => {
         if (error) {
             console.error('Erro ao obter dados do usuário:', error);
             return res.status(500).json({ error: 'Erro ao obter dados do usuário' });
@@ -64,6 +74,28 @@ router.put('/updateUserAndReminder', async (req, res) => {
     } catch (error) {
       res.status(500).json({ message: 'Erro ao atualizar os dados', error });
     }
+});
+
+router.delete('/delete', authenticateJWT, (req, res) => {
+    const userId = req.user.id;
+
+    if (!userId) {
+        return res.status(400).json({ error: 'ID do usuário é obrigatório' });
+    }
+
+    // Deletar o usuário no banco de dados
+    connection.query('DELETE FROM usuario WHERE idUsuario = ?', [userId], (error, results) => {
+        if (error) {
+            console.error('Erro ao deletar o usuário:', error);
+            return res.status(500).json({ error: 'Erro ao deletar o usuário' });
+        }
+        
+        if (results.affectedRows === 0) {
+            return res.status(404).json({ error: 'Usuário não encontrado' });
+        }
+
+        res.status(200).json({ message: 'Usuário deletado com sucesso!' });
+    });
 });
 
 module.exports = router;
