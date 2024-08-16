@@ -38,7 +38,6 @@ router.post('/register', async (req, res) => {
         // Verificar se o e-mail já está em uso
         connection.query('SELECT * FROM Usuario WHERE email = ?', [email], async (error, results) => {
             if (error) {
-                console.error('Erro ao verificar e-mail:', error);
                 return res.status(500).json({ error: 'Erro ao verificar e-mail' });
             }
 
@@ -53,14 +52,12 @@ router.post('/register', async (req, res) => {
                 // Inserir novo usuário usando a PROCEDURE armazenada
                 connection.query('CALL AddUser(?, ?, ?, ?, ?, ?)', [nome, email, peso, dataNasc, idTipoDeUsuario, hashedPassword], (error) => {
                     if (error) {
-                        console.error('Erro ao registrar usuário:', error);
                         return res.status(500).json({ error: 'Erro ao registrar usuário' });
                     }
 
                     res.status(201).json({ message: 'Usuário registrado com sucesso!' });
                 });
             } catch (err) {
-                console.error('Erro ao processar a senha:', err);
                 res.status(500).json({ error: 'Erro ao processar a senha' });
             }
         });
@@ -73,9 +70,9 @@ router.post('/register', async (req, res) => {
 
 // Rota para login de usuário
 router.post('/login', (req, res) => {
-    const { email , password } = req.body; // Altere 'senha' para 'password'
+    const { email , password } = req.body; 
 
-    console.log('Login request body:', req.body); // Log para depuração
+    console.log('Login request body:', req.body);
 
     if ((!email) || !password) {
         return res.status(400).json({ error: 'Nome ou e-mail, e senha são obrigatórios' });
@@ -112,38 +109,6 @@ router.post('/login', (req, res) => {
 });
 
 
-// Rota para pesquisar usuarios
-router.get('/user/:id', (req, res) => {
-    const userId = req.params.id;
-
-    // Verificar se o ID do usuário foi fornecido
-    if (!userId) {
-        return res.status(400).json({ error: 'ID do usuário é obrigatório' });
-    }
-
-    // Consultar usuário e aplicar FUNCTIONS para obter idade e tipo
-    connection.query(`
-        SELECT 
-            nome, 
-            peso, 
-            dataNasc, 
-            idTipoDeUsuario,
-            CalculateAge(dataNasc) AS idade,
-            GetUserType(idTipoDeUsuario) AS tipo
-        FROM Usuario
-        WHERE idUsuario = ?`, [userId], (error, results) => {
-        if (error) {
-            console.error('Erro ao obter detalhes do usuário:', error);
-            return res.status(500).json({ error: 'Erro ao obter detalhes do usuário' });
-        }
-        if (results.length === 0) {
-            return res.status(404).json({ error: 'Usuário não encontrado' });
-        }
-
-        const user = results[0];
-        res.json(user);
-    });
-});
 
 
 module.exports = router;

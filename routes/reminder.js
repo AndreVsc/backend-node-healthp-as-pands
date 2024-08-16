@@ -13,6 +13,7 @@ const connection = mysql.createConnection({
     port: process.env.DB_PORT,
 });
 
+
 // Rota para adicionar lembrete
 router.post('/reminder', (req, res) => {
 
